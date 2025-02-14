@@ -73,7 +73,7 @@ fn evolve(values: &[u32], weights: &[u32]) -> Individual {
     for _ in 0..MAX_GENERATIONS {
         population.sort_by(|a, b| b.fitness.cmp(&a.fitness));
         
-        let mut new_population = population[..ELITE_COUNT].to_vec(); // Retain elites
+        let mut new_population = population[..ELITE_COUNT].to_vec();
         
         while new_population.len() < POP_SIZE {
             let parent1 = tournament_selection(&population);
