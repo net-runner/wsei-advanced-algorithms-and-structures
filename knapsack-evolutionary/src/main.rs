@@ -1,9 +1,10 @@
 use rand::{rng, Rng};
-
 const POP_SIZE: usize = 100;
-const MAX_GENERATIONS: usize = 10000;
+const MAX_GENERATIONS: usize = 1000;
 const MUTATION_RATE: f64 = 0.1;
 const CAPACITY: u32 = 2500;
+const ELITE_COUNT: usize = 5; // Number of top individuals to retain each generation
+const TOURNAMENT_SIZE: usize = 5; // Number of individuals in tournament selection
 
 #[derive(Clone)]
 struct Individual {
@@ -15,7 +16,7 @@ struct Individual {
 impl Individual {
     fn new(size: usize) -> Self {
         let mut rng = rng();
-        let genes = (0..size).map(|_| rng.random_bool(0.5)).collect();
+        let genes = (0..size).map(|_| rng.gen_bool(0.5)).collect();
         Self { genes, fitness: 0, total_weight: 0 }
     }
     
@@ -32,15 +33,16 @@ impl Individual {
 
 fn mutate(individual: &mut Individual) {
     let mut rng = rng();
-    if rng.random::<f64>() < MUTATION_RATE {
-        let index = rng.random_range(0..individual.genes.len());
-        individual.genes[index] = !individual.genes[index];
+    for gene in &mut individual.genes {
+        if rng.gen::<f64>() < MUTATION_RATE {
+            *gene = !*gene;
+        }
     }
 }
 
 fn crossover(parent1: &Individual, parent2: &Individual) -> Individual {
     let mut rng = rng();
-    let crossover_point = rng.random_range(0..parent1.genes.len());
+    let crossover_point = rng.gen_range(0..parent1.genes.len());
     let genes: Vec<bool> = parent1.genes[..crossover_point].iter()
         .chain(&parent2.genes[crossover_point..])
         .cloned()
@@ -49,23 +51,33 @@ fn crossover(parent1: &Individual, parent2: &Individual) -> Individual {
     Individual { genes, fitness: 0, total_weight: 0 }
 }
 
+fn tournament_selection(population: &[Individual]) -> &Individual {
+    let mut rng = rng();
+    let mut best = &population[rng.gen_range(0..population.len())];
+    for _ in 1..TOURNAMENT_SIZE {
+        let contender = &population[rng.gen_range(0..population.len())];
+        if contender.fitness > best.fitness {
+            best = contender;
+        }
+    }
+    best
+}
+
 fn evolve(values: &[u32], weights: &[u32]) -> Individual {
     let mut population: Vec<Individual> = (0..POP_SIZE).map(|_| Individual::new(values.len())).collect();
     
+    for individual in &mut population {
+        individual.evaluate(values, weights);
+    }
+    
     for _ in 0..MAX_GENERATIONS {
-        for individual in &mut population {
-            individual.evaluate(values, weights);
-        }
-        
         population.sort_by(|a, b| b.fitness.cmp(&a.fitness));
-        if population[0].fitness == CAPACITY {
-            break;
-        }
         
-        let mut new_population = Vec::new();
-        for _ in 0..POP_SIZE / 2 {
-            let parent1 = &population[rng().random_range(0..POP_SIZE / 2)];
-            let parent2 = &population[rng().random_range(0..POP_SIZE / 2)];
+        let mut new_population = population[..ELITE_COUNT].to_vec(); // Retain elites
+        
+        while new_population.len() < POP_SIZE {
+            let parent1 = tournament_selection(&population);
+            let parent2 = tournament_selection(&population);
             let mut child = crossover(parent1, parent2);
             mutate(&mut child);
             child.evaluate(values, weights);
@@ -74,6 +86,7 @@ fn evolve(values: &[u32], weights: &[u32]) -> Individual {
         
         population = new_population;
     }
+    
     population.sort_by(|a, b| b.fitness.cmp(&a.fitness));
     population[0].clone()
 }
