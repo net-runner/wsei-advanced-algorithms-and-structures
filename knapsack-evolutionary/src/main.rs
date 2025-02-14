@@ -16,7 +16,7 @@ struct Individual {
 impl Individual {
     fn new(size: usize) -> Self {
         let mut rng = rng();
-        let genes = (0..size).map(|_| rng.gen_bool(0.5)).collect();
+        let genes = (0..size).map(|_| rng.random_bool(0.5)).collect();
         Self { genes, fitness: 0, total_weight: 0 }
     }
     
@@ -34,7 +34,7 @@ impl Individual {
 fn mutate(individual: &mut Individual) {
     let mut rng = rng();
     for gene in &mut individual.genes {
-        if rng.gen::<f64>() < MUTATION_RATE {
+        if rng.random::<f64>() < MUTATION_RATE {
             *gene = !*gene;
         }
     }
@@ -42,7 +42,7 @@ fn mutate(individual: &mut Individual) {
 
 fn crossover(parent1: &Individual, parent2: &Individual) -> Individual {
     let mut rng = rng();
-    let crossover_point = rng.gen_range(0..parent1.genes.len());
+    let crossover_point = rng.random_range(0..parent1.genes.len());
     let genes: Vec<bool> = parent1.genes[..crossover_point].iter()
         .chain(&parent2.genes[crossover_point..])
         .cloned()
@@ -53,9 +53,9 @@ fn crossover(parent1: &Individual, parent2: &Individual) -> Individual {
 
 fn tournament_selection(population: &[Individual]) -> &Individual {
     let mut rng = rng();
-    let mut best = &population[rng.gen_range(0..population.len())];
+    let mut best = &population[rng.random_range(0..population.len())];
     for _ in 1..TOURNAMENT_SIZE {
-        let contender = &population[rng.gen_range(0..population.len())];
+        let contender = &population[rng.random_range(0..population.len())];
         if contender.fitness > best.fitness {
             best = contender;
         }
