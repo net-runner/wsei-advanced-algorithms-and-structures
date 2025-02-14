@@ -1,0 +1,1 @@
+C:\Users\Jan\Desktop\KOD\Rust\wsei-advanced-algorithms-and-structures\knapsack-evolutionary\target\debug\knapsack-evolutionary.exe: C:\Users\Jan\Desktop\KOD\Rust\wsei-advanced-algorithms-and-structures\knapsack-evolutionary\src\main.rs
